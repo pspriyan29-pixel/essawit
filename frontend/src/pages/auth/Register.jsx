@@ -149,14 +149,19 @@ const Register = () => {
 
     try {
       const { name, email, password, phone } = formData;
-      const result = await register({ name, email, password, phone });
+      const result = await register({ name, email, password, phone: phone || undefined });
       if (result?.success) {
-        toast.success('Registrasi berhasil! Selamat bergabung dengan NusaPalma.');
-        navigate('/dashboard');
+        // Success - navigation is handled in AuthContext
+        return;
+      } else {
+        // Error already shown by AuthContext, just stop loading
       }
     } catch (error) {
       // Error handling is done in AuthContext
       console.error('Register error:', error);
+      if (!error.response) {
+        toast.error('Terjadi kesalahan. Pastikan backend berjalan.');
+      }
     } finally {
       setLoading(false);
     }

@@ -77,7 +77,16 @@ export const AuthProvider = ({ children }) => {
   const login = async (email, password) => {
     try {
       const response = await api.post('/auth/login', { email, password });
+      
+      if (!response.data || !response.data.success || !response.data.data) {
+        throw new Error('Response format tidak valid');
+      }
+      
       const { token: newToken, user: userData } = response.data.data;
+      
+      if (!newToken || !userData) {
+        throw new Error('Token atau user data tidak ditemukan dalam response');
+      }
       
       localStorage.setItem('token', newToken);
       setToken(newToken);
@@ -88,7 +97,8 @@ export const AuthProvider = ({ children }) => {
       navigate('/dashboard');
       return { success: true };
     } catch (error) {
-      const message = error.response?.data?.message || 'Login gagal';
+      console.error('Login error:', error);
+      const message = error.response?.data?.message || error.message || 'Login gagal';
       toast.error(message);
       return { success: false, error: message };
     }
@@ -97,7 +107,16 @@ export const AuthProvider = ({ children }) => {
   const register = async (userData) => {
     try {
       const response = await api.post('/auth/register', userData);
+      
+      if (!response.data || !response.data.success || !response.data.data) {
+        throw new Error('Response format tidak valid');
+      }
+      
       const { token: newToken, user: newUser } = response.data.data;
+      
+      if (!newToken || !newUser) {
+        throw new Error('Token atau user data tidak ditemukan dalam response');
+      }
       
       localStorage.setItem('token', newToken);
       setToken(newToken);
@@ -108,7 +127,8 @@ export const AuthProvider = ({ children }) => {
       navigate('/dashboard');
       return { success: true };
     } catch (error) {
-      const message = error.response?.data?.message || 'Registrasi gagal';
+      console.error('Register error:', error);
+      const message = error.response?.data?.message || error.message || 'Registrasi gagal';
       toast.error(message);
       return { success: false, error: message };
     }
@@ -126,7 +146,16 @@ export const AuthProvider = ({ children }) => {
   const oauthLogin = async (oauthData) => {
     try {
       const response = await api.post('/auth/oauth', oauthData);
+      
+      if (!response.data || !response.data.success || !response.data.data) {
+        throw new Error('Response format tidak valid');
+      }
+      
       const { token: newToken, user: userData } = response.data.data;
+      
+      if (!newToken || !userData) {
+        throw new Error('Token atau user data tidak ditemukan dalam response');
+      }
       
       localStorage.setItem('token', newToken);
       setToken(newToken);
@@ -137,7 +166,8 @@ export const AuthProvider = ({ children }) => {
       navigate('/dashboard');
       return { success: true };
     } catch (error) {
-      const message = error.response?.data?.message || 'Login gagal';
+      console.error('OAuth login error:', error);
+      const message = error.response?.data?.message || error.message || 'Login gagal';
       toast.error(message);
       return { success: false, error: message };
     }

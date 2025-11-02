@@ -101,11 +101,11 @@ export const oauthLogin = catchAsync(async (req, res) => {
 
   if (!user) {
     // Create new user with OAuth
-    const randomPassword = `oauth_${provider}_${providerId}_${Date.now()}_${Math.random().toString(36).substring(7)}`;
+    const randomPassword = `oauth_${provider}_${providerId || email}_${Date.now()}_${Math.random().toString(36).substring(7)}`;
     user = await User.create({
       name: name || 'User',
       email,
-      password: randomPassword, // Dummy password - will be hashed by pre-save hook
+      password: randomPassword, // Dummy password - won't be hashed for OAuth users
       profilePicture: picture || '',
       oauthProvider: provider,
       oauthId: providerId || email

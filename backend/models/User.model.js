@@ -19,9 +19,16 @@ const userSchema = new mongoose.Schema({
     type: String,
     required: function() {
       // Password is required unless user is using OAuth
-      return !this.oauthProvider;
+      return !this.oauthProvider && !this.password?.startsWith('oauth_');
     },
-    minlength: [6, 'Password minimal 6 karakter'],
+    minlength: {
+      validator: function(v) {
+        // Skip minlength validation for OAuth users
+        if (this.oauthProvider || v?.startsWith('oauth_')) return true;
+        return v && v.length >= 6;
+      },
+      message: 'Password minimal 6 karakter'
+    },
     select: false
   },
   phone: {
@@ -88,10 +95,10 @@ const userSchema = new mongoose.Schema({
 // Hash password before saving (only if password is provided)
 userSchema.pre('save', async function(next) {
   if (!this.isModified('password')) return next();
-  // Only hash password if it's provided (not for OAuth users without password)
-  if (this.password && !this.password.startsWith('oauth_')) {
-    this.password = await bcrypt.hash(this.password, 12);
-  }
+  // Skip hashing if using OAuth (password starts with oauth_)
+  if (!this.password || this.password.startsWith('oauth_')) return next();
+  // Hash password for regular users
+  this.password = await bcrypt.hash(this.password, 12);
   next();
 });
 

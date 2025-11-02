@@ -84,16 +84,20 @@ const OAuthButtons = () => {
         const userInfo = await userInfoResponse.json();
         
         // Send to backend
-        await oauthLogin({
+        const result = await oauthLogin({
           provider: 'google',
           email: userInfo.email,
           name: userInfo.name,
           picture: userInfo.picture,
           providerId: userInfo.sub
         });
+        
+        if (!result?.success) {
+          setLoading(null);
+        }
       } catch (error) {
         console.error('Google login error:', error);
-        toast.error('Gagal login dengan Google');
+        toast.error(error.message || 'Gagal login dengan Google');
         setLoading(null);
       }
     },
@@ -132,16 +136,20 @@ const OAuthButtons = () => {
               const pictureUrl = pictureData.data?.url || '';
 
               // Send to backend
-              await oauthLogin({
+              const result = await oauthLogin({
                 provider: 'facebook',
                 email: userInfo.email || `${userInfo.id}@facebook.com`,
                 name: userInfo.name,
                 picture: pictureUrl,
                 providerId: userInfo.id
               });
+              
+              if (!result?.success) {
+                setLoading(null);
+              }
             } catch (error) {
               console.error('Facebook login error:', error);
-              toast.error('Gagal login dengan Facebook');
+              toast.error(error.message || 'Gagal login dengan Facebook');
               setLoading(null);
             }
           });
