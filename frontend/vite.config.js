@@ -3,6 +3,7 @@ import react from '@vitejs/plugin-react';
 
 export default defineConfig({
   plugins: [react()],
+  base: '/', // Explicitly set base path
   server: {
     port: 7777,
     proxy: {
@@ -16,13 +17,15 @@ export default defineConfig({
     // For production, set CSP in your server (nginx, Apache, etc.)
   },
   build: {
+    outDir: 'dist',
+    assetsDir: 'assets',
     rollupOptions: {
       output: {
         manualChunks: undefined
       }
     },
-    outDir: 'dist',
-    assetsDir: 'assets',
+    // Ensure proper path resolution
+    emptyOutDir: true,
   },
   preview: {
     port: 7777,
@@ -35,4 +38,3 @@ export default defineConfig({
     }
   }
 });
-
