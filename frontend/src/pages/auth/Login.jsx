@@ -95,16 +95,17 @@ const Login = () => {
     try {
       const result = await login(formData.email, formData.password);
       if (result?.success) {
-        // Handle remember me if needed (token already saved in AuthContext)
-        if (formData.rememberMe) {
-          // Token already saved in localStorage
-          toast.success('Login berhasil! Selamat datang kembali.');
-        }
-        navigate(from, { replace: true });
+        // Success - navigation is handled in AuthContext
+        return;
+      } else {
+        // Error already shown by AuthContext, just stop loading
       }
     } catch (error) {
       // Error handling is done in AuthContext
       console.error('Login error:', error);
+      if (!error.response) {
+        toast.error('Terjadi kesalahan. Pastikan backend berjalan.');
+      }
     } finally {
       setLoading(false);
     }
