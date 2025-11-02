@@ -2,8 +2,11 @@ import axios from 'axios';
 import toast from 'react-hot-toast';
 import { ERROR_MESSAGES } from './constants';
 
+// Get API URL from environment variable or use relative path
+const API_URL = import.meta.env.VITE_API_URL || '/api';
+
 const api = axios.create({
-  baseURL: '/api',
+  baseURL: API_URL,
   headers: {
     'Content-Type': 'application/json',
   },
