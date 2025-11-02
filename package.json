@@ -1,0 +1,20 @@
+{
+  "name": "nusapalma",
+  "version": "1.0.0",
+  "description": "NusaPalma - Platform Manajemen Sawit untuk Petani",
+  "author": "Riyan Perdhana Putra",
+  "main": "index.js",
+  "scripts": {
+    "dev": "concurrently \"npm run dev:backend\" \"npm run dev:frontend\"",
+    "dev:backend": "cd backend && npm run dev",
+    "dev:frontend": "cd frontend && npm run dev",
+    "install:all": "npm install && cd backend && npm install && cd ../frontend && npm install"
+  },
+  "keywords": ["sawit", "management", "petani"],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  }
+}
+
