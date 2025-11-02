@@ -79,14 +79,60 @@ Platform manajemen sawit lengkap dengan fitur input panen, edukasi, beasiswa, da
 - MongoDB (local atau cloud)
 - npm atau yarn
 
-### Setup
+### Quick Setup
 
-1. Clone repository atau download project
-
-2. Install dependencies untuk root project:
+**Untuk setup cepat, gunakan setup checker:**
 ```bash
-npm install
+node setup-check.js
 ```
+
+### Manual Setup
+
+1. **Clone repository atau download project**
+
+2. **Setup Backend Environment:**
+   ```bash
+   cd backend
+   cp env.example .env
+   # Edit .env file dan isi dengan konfigurasi Anda
+   ```
+
+3. **Setup Frontend Environment:**
+   ```bash
+   cd frontend
+   # Buat file .env dengan isi:
+   # VITE_API_URL=http://localhost:5000/api
+   # VITE_GOOGLE_CLIENT_ID=your_google_client_id
+   # VITE_FACEBOOK_APP_ID=your_facebook_app_id
+   ```
+
+4. **Install dependencies untuk root project:**
+   ```bash
+   npm install
+   ```
+
+5. **Install dependencies untuk backend dan frontend:**
+   ```bash
+   npm run install:all
+   ```
+
+6. **Pastikan MongoDB berjalan:**
+   ```bash
+   # Check MongoDB connection
+   cd backend
+   node scripts/check-db.js
+   ```
+
+7. **Check environment variables:**
+   ```bash
+   # Backend
+   cd backend
+   node scripts/check-env.js
+   
+   # Frontend
+   cd frontend
+   node scripts/check-env.js
+   ```
 
 3. Install backend dependencies:
 ```bash
