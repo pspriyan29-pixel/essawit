@@ -1,127 +1,108 @@
 import Scholarship from '../models/Scholarship.model.js';
+import { catchAsync, NotFoundError, ValidationError } from '../utils/errorHandler.js';
+import { sendSuccess, sendPaginated } from '../utils/responseHandler.js';
+import logger from '../utils/logger.js';
 
-export const getAllScholarships = async (req, res) => {
-  try {
-    const { isActive, page = 1, limit = 10 } = req.query;
-    const query = {};
+export const getAllScholarships = catchAsync(async (req, res) => {
+  const { isActive, page = 1, limit = 10 } = req.query;
+  const query = {};
 
-    if (isActive !== undefined) {
-      query.isActive = isActive === 'true';
-    }
-
-    const skip = (parseInt(page) - 1) * parseInt(limit);
-    
-    const scholarships = await Scholarship.find(query)
-      .sort({ deadline: 1, createdAt: -1 })
-      .skip(skip)
-      .limit(parseInt(limit));
-
-    const total = await Scholarship.countDocuments(query);
-
-    res.json({
-      success: true,
-      data: scholarships,
-      pagination: {
-        page: parseInt(page),
-        limit: parseInt(limit),
-        total,
-        pages: Math.ceil(total / parseInt(limit))
-      }
-    });
-  } catch (error) {
-    res.status(500).json({ message: 'Server error', error: error.message });
+  if (isActive !== undefined) {
+    query.isActive = isActive === 'true';
   }
-};
 
-export const getScholarshipById = async (req, res) => {
-  try {
-    const scholarship = await Scholarship.findById(req.params.id);
-    
-    if (!scholarship) {
-      return res.status(404).json({ message: 'Beasiswa tidak ditemukan' });
-    }
+  const skip = (parseInt(page) - 1) * parseInt(limit);
+  const limitNum = Math.min(parseInt(limit) || 10, 100);
+  
+  const scholarships = await Scholarship.find(query)
+    .sort({ deadline: 1, createdAt: -1 })
+    .skip(skip)
+    .limit(limitNum);
 
-    res.json({
-      success: true,
-      data: scholarship
-    });
-  } catch (error) {
-    res.status(500).json({ message: 'Server error', error: error.message });
+  const total = await Scholarship.countDocuments(query);
+
+  sendPaginated(res, 200, scholarships, {
+    page: parseInt(page) || 1,
+    limit: limitNum,
+    total,
+    pages: Math.ceil(total / limitNum)
+  }, 'Beasiswa berhasil diambil');
+});
+
+export const getScholarshipById = catchAsync(async (req, res) => {
+  const scholarship = await Scholarship.findById(req.params.id);
+  
+  if (!scholarship) {
+    throw new NotFoundError('Beasiswa');
   }
-};
 
-export const applyScholarship = async (req, res) => {
-  try {
-    const scholarship = await Scholarship.findById(req.params.id);
-    
-    if (!scholarship) {
-      return res.status(404).json({ message: 'Beasiswa tidak ditemukan' });
-    }
+  sendSuccess(res, 200, 'Beasiswa berhasil diambil', scholarship);
+});
 
-    if (!scholarship.isActive) {
-      return res.status(400).json({ message: 'Beasiswa ini sudah tidak aktif' });
-    }
+export const applyScholarship = catchAsync(async (req, res) => {
+  const scholarship = await Scholarship.findById(req.params.id);
+  
+  if (!scholarship) {
+    throw new NotFoundError('Beasiswa');
+  }
 
-    // Check if deadline has passed
-    if (new Date() > new Date(scholarship.deadline)) {
-      return res.status(400).json({ message: 'Pendaftaran beasiswa ini sudah ditutup' });
-    }
+  if (!scholarship.isActive) {
+    throw new ValidationError('Beasiswa ini sudah tidak aktif');
+  }
 
-    // Check if user already applied
-    const alreadyApplied = scholarship.applicants.some(
+  // Check if deadline has passed
+  if (new Date() > new Date(scholarship.deadline)) {
+    throw new ValidationError('Pendaftaran beasiswa ini sudah ditutup');
+  }
+
+  // Check if user already applied
+  const alreadyApplied = scholarship.applicants?.some(
+    app => app.userId.toString() === req.user._id.toString()
+  );
+
+  if (alreadyApplied) {
+    throw new ValidationError('Anda sudah mendaftar beasiswa ini');
+  }
+
+  // Add applicant
+  if (!scholarship.applicants) {
+    scholarship.applicants = [];
+  }
+  
+  scholarship.applicants.push({
+    userId: req.user._id,
+    status: 'pending',
+    appliedAt: new Date()
+  });
+
+  await scholarship.save();
+
+  logger.info(`Scholarship applied: ${scholarship._id}`, { userId: req.user._id });
+  sendSuccess(res, 200, 'Pendaftaran beasiswa berhasil', scholarship);
+});
+
+export const getMyApplications = catchAsync(async (req, res) => {
+  const scholarships = await Scholarship.find({
+    'applicants.userId': req.user._id
+  });
+
+  const myApplications = scholarships.map(scholarship => {
+    const application = scholarship.applicants?.find(
       app => app.userId.toString() === req.user._id.toString()
     );
+    return {
+      scholarship: {
+        id: scholarship._id,
+        title: scholarship.title,
+        provider: scholarship.provider,
+        amount: scholarship.amount,
+        deadline: scholarship.deadline,
+        isActive: scholarship.isActive
+      },
+      application
+    };
+  });
 
-    if (alreadyApplied) {
-      return res.status(400).json({ message: 'Anda sudah mendaftar beasiswa ini' });
-    }
-
-    // Add applicant
-    scholarship.applicants.push({
-      userId: req.user._id,
-      status: 'pending'
-    });
-
-    await scholarship.save();
-
-    res.json({
-      success: true,
-      message: 'Pendaftaran beasiswa berhasil',
-      data: scholarship
-    });
-  } catch (error) {
-    res.status(500).json({ message: 'Server error', error: error.message });
-  }
-};
-
-export const getMyApplications = async (req, res) => {
-  try {
-    const scholarships = await Scholarship.find({
-      'applicants.userId': req.user._id
-    });
-
-    const myApplications = scholarships.map(scholarship => {
-      const application = scholarship.applicants.find(
-        app => app.userId.toString() === req.user._id.toString()
-      );
-      return {
-        scholarship: {
-          id: scholarship._id,
-          title: scholarship.title,
-          provider: scholarship.provider,
-          amount: scholarship.amount,
-          deadline: scholarship.deadline
-        },
-        application
-      };
-    });
-
-    res.json({
-      success: true,
-      data: myApplications
-    });
-  } catch (error) {
-    res.status(500).json({ message: 'Server error', error: error.message });
-  }
-};
+  sendSuccess(res, 200, 'Aplikasi beasiswa berhasil diambil', myApplications);
+});
 

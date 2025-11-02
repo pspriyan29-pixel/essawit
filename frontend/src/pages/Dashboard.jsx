@@ -44,15 +44,15 @@ const Dashboard = () => {
   const { data: dashboardData, isLoading, error, refetch } = useQuery(
     'dashboard',
     async () => {
-      const [stats, harvests, recentHarvests] = await Promise.all([
+      const [statsResponse, harvestsResponse, recentHarvestsResponse] = await Promise.all([
         api.get('/users/dashboard'),
         api.get('/harvest?limit=12&sort=-date'),
         api.get('/harvest?limit=5'),
       ]);
       return {
-        stats: stats.data.data,
-        harvests: harvests.data.data || [],
-        recentHarvests: recentHarvests.data.data || [],
+        stats: statsResponse.data.data,
+        harvests: harvestsResponse.data.data || [],
+        recentHarvests: recentHarvestsResponse.data.data || [],
       };
     },
     {
